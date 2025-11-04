@@ -29,13 +29,58 @@ services:
       - auth-api-2
     volumes:
       - ./nginx/auth.balancer.conf:/etc/nginx/conf.d/default.conf:ro
-    expose:
-      - "8080"
     ports:
       - "8080:80"
     networks:
       - auth-net
 
+  # Ingest service instances
+  ingest-api-1:
+    container_name: ingest-api-1
+    hostname: ingest-api-1
+    build:
+      context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
+      dockerfile: Dockerfile
+    networks:
+      - ingest-net
+    env_file:
+      - ./env/ingest-api.env
+  ingest-api-2:
+    container_name: ingest-api-2
+    hostname: ingest-api-2
+    build:
+      context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
+      dockerfile: Dockerfile
+    networks:
+      - ingest-net
+    env_file:
+      - ./env/ingest-api.env
+  ingest-api-3:
+    container_name: ingest-api-3
+    hostname: ingest-api-3
+    build:
+      context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
+      dockerfile: Dockerfile
+    networks:
+      - ingest-net
+    env_file:
+      - ./env/ingest-api.env
+  ingest-balancer:
+    image: nginx:stable
+    container_name: ingest-balancer
+    depends_on:
+      - ingest-api-1
+      - ingest-api-2
+      - ingest-api-3
+    volumes:
+      - ./nginx/ingest.balancer.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8081:80"
+    networks:
+      - ingest-net
+
 networks:
   auth-net:
+    driver: bridge
+  ingest-net:
     driver: bridge
