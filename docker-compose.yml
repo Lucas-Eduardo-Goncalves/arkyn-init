@@ -33,6 +33,7 @@ services:
       - "8080:80"
     networks:
       - auth-net
+      - shared-net
 
   # Ingest service instances
   ingest-api-1:
@@ -43,8 +44,11 @@ services:
       dockerfile: Dockerfile
     networks:
       - ingest-net
+      - shared-net
     env_file:
       - ./env/ingest-api.env
+    depends_on:
+      - auth-balancer
   ingest-api-2:
     container_name: ingest-api-2
     hostname: ingest-api-2
@@ -53,8 +57,11 @@ services:
       dockerfile: Dockerfile
     networks:
       - ingest-net
+      - shared-net
     env_file:
       - ./env/ingest-api.env
+    depends_on:
+      - auth-balancer
   ingest-api-3:
     container_name: ingest-api-3
     hostname: ingest-api-3
@@ -63,8 +70,11 @@ services:
       dockerfile: Dockerfile
     networks:
       - ingest-net
+      - shared-net
     env_file:
       - ./env/ingest-api.env
+    depends_on:
+      - auth-balancer
   ingest-balancer:
     image: nginx:stable
     container_name: ingest-balancer
@@ -83,4 +93,6 @@ networks:
   auth-net:
     driver: bridge
   ingest-net:
+    driver: bridge
+  shared-net:
     driver: bridge
