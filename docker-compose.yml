@@ -46,17 +46,6 @@ services:
       - queue-net
     ports:
       - "9092:9092"
-  queue-init:
-    image: apache/kafka:latest
-    depends_on:
-      - queue
-    networks:
-      - queue-net
-    volumes:
-      - ./scripts/:/scripts:ro
-    command: >
-      bash -c "/scripts/queueInit.sh"
-    restart: "no"
   queue-ui:
     image: provectuslabs/kafka-ui:latest
     depends_on:
@@ -67,6 +56,17 @@ services:
       - queue-net
     ports:
       - 5175:8080
+  worker-api:
+    build:
+      context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-worker.git#main
+    depends_on:
+      - queue
+      - store-balancer
+    env_file:
+      - ./src/env/worker.env
+    networks:
+      - queue-net
+      - store-net
   store-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-store.git#main
