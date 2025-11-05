@@ -1,1 +1,1 @@
-sudo docker compose up -d --build --scale auth-api=2 --scale ingest-api=3
+sudo docker compose up -d --build --scale auth-api=2 --scale ingest-api=3 --scale store-api=3
