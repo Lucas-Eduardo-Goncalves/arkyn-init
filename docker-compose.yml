@@ -2,42 +2,62 @@ services:
   auth-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-auth.git#main
-    networks:
-      - auth-net
     env_file:
       - ./src/env/auth.env
+    networks:
+      - auth-net
   auth-balancer:
     image: nginx:stable
     depends_on:
       - auth-api
-    volumes:
-      - ./src/nginx/auth.balancer.conf:/etc/nginx/conf.d/default.conf:ro
-    ports:
-      - "8080:80"
     networks:
       - auth-net
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src/nginx/auth.balancer.conf:/etc/nginx/conf.d/default.conf:ro
   ingest-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
+    depends_on:
+      - auth-balancer
+      - queue
+    env_file:
+      - ./src/env/ingest.env
     networks:
       - ingest-net
       - auth-net
-    env_file:
-      - ./src/env/ingest.env
-    depends_on:
-      - auth-balancer
+      - queue-net
   ingest-balancer:
     image: nginx:stable
     depends_on:
       - ingest-api
-    volumes:
-      - ./src/nginx/ingest.balancer.conf:/etc/nginx/conf.d/default.conf:ro
-    ports:
-      - "8081:80"
     networks:
       - ingest-net
+    ports:
+      - "8081:80"
+    volumes:
+      - ./src/nginx/ingest.balancer.conf:/etc/nginx/conf.d/default.conf:ro
+  queue:
+    image: apache/kafka:latest
+    env_file:
+      - ./src/env/queue.env
+    networks:
+      - queue-net
+  queue-ui:
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      - queue
+    env_file:
+      - ./src/env/queueUi.env
+    networks:
+      - queue-net
+    ports:
+      - 5175:8080
 networks:
   auth-net:
     driver: bridge
   ingest-net:
+    driver: bridge
+  queue-net:
     driver: bridge
