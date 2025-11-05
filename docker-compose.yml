@@ -1,11 +1,28 @@
 services:
+  auth-db:
+    image: postgres:15
+    env_file:
+      - ./src/env/authDb.env
+    networks:
+      - auth-net
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
   auth-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-auth.git#main
+    depends_on:
+      - auth-db
     env_file:
       - ./src/env/auth.env
     networks:
       - auth-net
+    restart: unless-stopped
   auth-balancer:
     image: nginx:stable
     depends_on:
@@ -16,6 +33,7 @@ services:
       - "8080:80"
     volumes:
       - ./src/nginx/auth.balancer.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
   ingest-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
@@ -28,6 +46,7 @@ services:
       - ingest-net
       - auth-net
       - queue-net
+    restart: unless-stopped
   ingest-balancer:
     image: nginx:stable
     depends_on:
@@ -38,6 +57,7 @@ services:
       - "8081:80"
     volumes:
       - ./src/nginx/ingest.balancer.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
   queue:
     image: apache/kafka:latest
     env_file:
@@ -46,6 +66,7 @@ services:
       - queue-net
     ports:
       - "9092:9092"
+    restart: unless-stopped
   queue-ui:
     image: provectuslabs/kafka-ui:latest
     depends_on:
@@ -56,6 +77,7 @@ services:
       - queue-net
     ports:
       - 5175:8080
+    restart: unless-stopped
   worker-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-worker.git#main
@@ -67,25 +89,44 @@ services:
     networks:
       - queue-net
       - store-net
+    restart: unless-stopped
+  store-db:
+    image: postgres:15
+    env_file:
+      - ./src/env/storeDb.env
+    networks:
+      - store-net
+    volumes:
+      - store_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
   store-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-store.git#main
     env_file:
       - ./src/env/store.env
-    networks:
-      - store-net
-  store-balancer:
-    image: nginx:stable
     depends_on:
+      - store-db
       - auth-balancer
-      - store-api
     networks:
       - store-net
       - auth-net
+    restart: unless-stopped
+  store-balancer:
+    image: nginx:stable
+    depends_on:
+      - store-api
+    networks:
+      - store-net
     ports:
       - "8082:80"
     volumes:
       - ./src/nginx/store.balancer.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
 networks:
   auth-net:
     driver: bridge
@@ -95,3 +136,6 @@ networks:
     driver: bridge
   store-net:
     driver: bridge
+volumes:
+  auth_postgres_data:
+  store_postgres_data:
