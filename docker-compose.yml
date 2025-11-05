@@ -1,18 +1,5 @@
 services:
-  # Authentication service instances
-  auth-api-1:
-    container_name: auth-api-1
-    hostname: auth-api-1
-    build:
-      context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-auth.git#main
-      dockerfile: Dockerfile
-    networks:
-      - auth-net
-    env_file:
-      - ./env/auth-api.env
-  auth-api-2:
-    container_name: auth-api-2
-    hostname: auth-api-2
+  auth-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-auth.git#main
       dockerfile: Dockerfile
@@ -21,12 +8,9 @@ services:
     env_file:
       - ./env/auth-api.env
   auth-balancer:
-    container_name: auth-balancer
-    hostname: auth-balancer
     image: nginx:stable
     depends_on:
-      - auth-api-1
-      - auth-api-2
+      - auth-api
     volumes:
       - ./nginx/auth.balancer.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
@@ -34,37 +18,7 @@ services:
     networks:
       - auth-net
       - shared-net
-
-  # Ingest service instances
-  ingest-api-1:
-    container_name: ingest-api-1
-    hostname: ingest-api-1
-    build:
-      context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
-      dockerfile: Dockerfile
-    networks:
-      - ingest-net
-      - shared-net
-    env_file:
-      - ./env/ingest-api.env
-    depends_on:
-      - auth-balancer
-  ingest-api-2:
-    container_name: ingest-api-2
-    hostname: ingest-api-2
-    build:
-      context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
-      dockerfile: Dockerfile
-    networks:
-      - ingest-net
-      - shared-net
-    env_file:
-      - ./env/ingest-api.env
-    depends_on:
-      - auth-balancer
-  ingest-api-3:
-    container_name: ingest-api-3
-    hostname: ingest-api-3
+  ingest-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
       dockerfile: Dockerfile
@@ -77,18 +31,14 @@ services:
       - auth-balancer
   ingest-balancer:
     image: nginx:stable
-    container_name: ingest-balancer
     depends_on:
-      - ingest-api-1
-      - ingest-api-2
-      - ingest-api-3
+      - ingest-api
     volumes:
       - ./nginx/ingest.balancer.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - "8081:80"
     networks:
       - ingest-net
-
 networks:
   auth-net:
     driver: bridge
