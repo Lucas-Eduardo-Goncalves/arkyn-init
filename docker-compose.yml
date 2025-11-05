@@ -44,6 +44,19 @@ services:
       - ./src/env/queue.env
     networks:
       - queue-net
+    ports:
+      - "9092:9092"
+  queue-init:
+    image: apache/kafka:latest
+    depends_on:
+      - queue
+    networks:
+      - queue-net
+    volumes:
+      - ./scripts/:/scripts
+    command: >
+      bash -c "chmod +x /scripts/queueInit.sh && /scripts/queueInit.sh"
+    restart: "no"
   queue-ui:
     image: provectuslabs/kafka-ui:latest
     depends_on:
