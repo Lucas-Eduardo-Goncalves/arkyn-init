@@ -2,31 +2,28 @@ services:
   auth-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-auth.git#main
-      dockerfile: Dockerfile
     networks:
       - auth-net
     env_file:
-      - ./env/auth-api.env
+      - ./src/env/auth.env
   auth-balancer:
     image: nginx:stable
     depends_on:
       - auth-api
     volumes:
-      - ./nginx/auth.balancer.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./src/nginx/auth.balancer.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - "8080:80"
     networks:
       - auth-net
-      - shared-net
   ingest-api:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
-      dockerfile: Dockerfile
     networks:
       - ingest-net
-      - shared-net
+      - auth-net
     env_file:
-      - ./env/ingest-api.env
+      - ./src/env/ingest.env
     depends_on:
       - auth-balancer
   ingest-balancer:
@@ -34,7 +31,7 @@ services:
     depends_on:
       - ingest-api
     volumes:
-      - ./nginx/ingest.balancer.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./src/nginx/ingest.balancer.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - "8081:80"
     networks:
@@ -43,6 +40,4 @@ networks:
   auth-net:
     driver: bridge
   ingest-net:
-    driver: bridge
-  shared-net:
     driver: bridge

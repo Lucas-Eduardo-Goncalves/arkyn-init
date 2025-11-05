@@ -1,5 +1,0 @@
-START:
-sudo docker compose up --build --scale auth-api=2 --scale ingest-api=3
-
-DOWN:
-sudo docker compose down
