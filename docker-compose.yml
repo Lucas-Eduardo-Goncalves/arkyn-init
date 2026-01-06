@@ -38,13 +38,11 @@ services:
     build:
       context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-ingest.git#main
     depends_on:
-      - auth-balancer
       - queue
     env_file:
       - ./src/env/ingest.env
     networks:
       - ingest-net
-      - auth-net
       - queue-net
     restart: unless-stopped
   ingest-balancer:
@@ -76,7 +74,7 @@ services:
     networks:
       - queue-net
     ports:
-      - 5175:8080
+      - 5174:8080
     restart: unless-stopped
   worker-api:
     build:
@@ -140,6 +138,18 @@ services:
       - store-net
     ports:
       - "5173:3000"
+    restart: unless-stopped
+  cleanup:
+    build:
+      context: https://github.com/Lucas-Eduardo-Goncalves/arkyn-cleanup.git#main
+    depends_on:
+      - queue
+      - store-balancer
+    env_file:
+      - ./src/env/cleanup.env
+    networks:
+      - queue-net
+      - store-net
     restart: unless-stopped
 networks:
   auth-net:
